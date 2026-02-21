@@ -5,21 +5,13 @@
     <title>AR Floating Gallery</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
-      #info {
-        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-        background: rgba(0,0,0,0.6); color: white; padding: 12px 24px;
-        border-radius: 20px; font-size: 16px; z-index: 999;
-        font-family: sans-serif;
-      }
     </style>
   </head>
   <body>
-    <div id="info">Halte die Kamera auf eine Fläche</div>
     <a-scene
-      webxr="requiredFeatures: hit-test; optionalFeatures: dom-overlay; overlayElement: #info;"
+      webxr="requiredFeatures: hit-test;"
       renderer="colorManagement: true"
       vr-mode-ui="enabled: false"
     >
@@ -30,9 +22,7 @@
         <img id="img3" src="IMG_4429.jpg">
       </a-assets>
 
-      <a-entity id="artwork" visible="false">
-        <a-image id="slide" src="#img0" width="1.5" height="1" position="0 0 0"></a-image>
-      </a-entity>
+      <a-image id="slide" src="#img0" width="1.5" height="1" position="0 1.5 -2"></a-image>
 
       <a-camera></a-camera>
     </a-scene>
@@ -40,18 +30,10 @@
     <script>
       const images = ['#img0','#img1','#img2','#img3'];
       let current = 0;
-      const slide = document.getElementById('slide');
-      const artwork = document.getElementById('artwork');
-
       setInterval(() => {
         current = (current + 1) % images.length;
-        slide.setAttribute('src', images[current]);
+        document.getElementById('slide').setAttribute('src', images[current]);
       }, 3000);
-
-      document.querySelector('a-scene').addEventListener('click', e => {
-        artwork.setAttribute('visible', true);
-        artwork.setAttribute('position', e.detail.intersection.point);
-      });
     </script>
   </body>
 </html>

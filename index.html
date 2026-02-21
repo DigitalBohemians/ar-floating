@@ -21,7 +21,6 @@
       <img id="img3" src="IMG_4429.jpg">
     </a-assets>
 
-    <!-- Dieses Entity wird in den WORLD SPACE gesetzt (bleibt stehen) -->
     <a-entity id="gallery" visible="false">
       <a-image id="slide" src="#img0" width="1.5" height="1"></a-image>
     </a-entity>
@@ -30,7 +29,6 @@
   </a-scene>
 
   <script>
-    // Slideshow
     const images = ['#img0','#img1','#img2','#img3'];
     let current = 0;
     setInterval(() => {
@@ -38,37 +36,34 @@
       document.getElementById('slide').setAttribute('src', images[current]);
     }, 3000);
 
-    // Einmalig vor der Kamera absetzen (bleibt dann im Raum)
     function placeInFront(distanceMeters = 2.0) {
       const camEl = document.getElementById('cam');
       const galleryEl = document.getElementById('gallery');
-
       const camObj = camEl.object3D;
       const pos = new THREE.Vector3();
       const dir = new THREE.Vector3();
-
       camObj.getWorldPosition(pos);
       camObj.getWorldDirection(dir);
-
-      // Position: Kamera + Blickrichtung * Distanz
       const target = pos.clone().add(dir.multiplyScalar(distanceMeters));
-
       galleryEl.object3D.position.copy(target);
-
-      // Optional: Gallery zur Kamera ausrichten (damit sie frontal ist)
       galleryEl.object3D.lookAt(pos);
-
       galleryEl.setAttribute('visible', 'true');
     }
 
-    // Warten bis A-Frame/Three initialisiert ist
-    window.addEventListener('load', () => {
-      // kurzer Delay, damit Camera Tracking “steht”
-      setTimeout(() => placeInFront(2.0), 800);
+    const btn = document.createElement('button');
+    btn.innerText = '▶ Platzieren';
+    btn.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 40px;font-size:22px;z-index:999;border:none;border-radius:12px;background:white;font-weight:bold;';
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+      btn.style.display = 'none';
+      setTimeout(() => placeInFront(2.0), 500);
     });
 
-    // Bonus: Tap = neu vor dir platzieren (praktisch)
-    document.addEventListener('click', () => placeInFront(2.0));
+    document.addEventListener('click', (e) => {
+      if (e.target === btn) return;
+      placeInFront(2.0);
+    });
   </script>
 </body>
 </html>

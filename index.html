@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AR Floating Gallery</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { overflow: hidden; background: black; }
+      video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+      #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+      img.floating {
+        position: absolute;
+        width: 250px;
+        touch-action: none;
+        border-radius: 4px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <video id="cam" autoplay playsinline muted></video>
+    <div id="overlay"></div>
+
+    <script>
+      // Kamera starten
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => document.getElementById('cam').srcObject = stream);
+
+      const images = ['IMG_5410.jpeg','IMG_4431.jpg','IMG_4430.jpg','IMG_4429.jpg'];
+      const overlay = document.getElementById('overlay');
+
+      images.forEach((src, i) => {
+        const img = document.createElement('img');
+        img.className =

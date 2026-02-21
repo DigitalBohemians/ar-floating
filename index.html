@@ -1,43 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>AR Floating Gallery</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <style>
-      body { margin: 0; overflow: hidden; }
-      a-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
-    </style>
-  </head>
-  <body>
-    <a-scene
-      webxr="requiredFeatures: hit-test; optionalFeatures: dom-overlay, local-floor;"
-      vr-mode-ui="enabled: false"
-      renderer="colorManagement: true; alpha: true"
-      background="color: transparent"
-    >
-      <a-assets>
-        <img id="img0" src="IMG_5410.jpeg">
-        <img id="img1" src="IMG_4431.jpg">
-        <img id="img2" src="IMG_4430.jpg">
-        <img id="img3" src="IMG_4429.jpg">
-      </a-assets>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+  <style>body{margin:0;overflow:hidden}</style>
+</head>
+<body>
+  <a-scene
+    embedded
+    vr-mode-ui="enabled:false"
+    renderer="alpha:true; antialias:true"
+    arjs="sourceType: webcam; debugUIEnabled:false;"
+  >
+    <a-assets>
+      <img id="img0" src="IMG_5410.jpeg">
+      <img id="img1" src="IMG_4431.jpg">
+      <img id="img2" src="IMG_4430.jpg">
+      <img id="img3" src="IMG_4429.jpg">
+    </a-assets>
 
-      <a-image id="slide" src="#img0" width="1.5" height="1" position="0 1.5 -2"
-        shadow="cast: true">
-      </a-image>
+    <!-- Dieses Entity wird in den WORLD SPACE gesetzt (bleibt stehen) -->
+    <a-entity id="gallery" visible="false">
+      <a-image id="slide" src="#img0" width="1.5" height="1"></a-image>
+    </a-entity>
 
-      <a-camera></a-camera>
-    </a-scene>
+    <a-entity id="cam" camera></a-entity>
+  </a-scene>
 
-    <script>
-      const images = ['#img0','#img1','#img2','#img3'];
-      let current = 0;
-      setInterval(() => {
-        current = (current + 1) % images.length;
-        document.getElementById('slide').setAttribute('src', images[current]);
-      }, 3000);
-    </script>
-  </body>
+  <script>
+    // Slideshow
+    const images = ['#img0','#img1','#img2','#img3'];
+    let current = 0;
+    setInterval(() => {
+      current = (current + 1) % images.length;
+      document.getElementById('slide').setAttribute('src', images[current]);
+    }, 3000);
+
+    // Einmalig vor der Kamera absetzen (bleibt dann im Raum)
+    function placeInFront(distanceMeters = 2.0) {
+      const camEl = document.getElementById('cam');
+      const galleryEl = document.getElementById('gallery');
+
+      const camObj = camEl.object3D;
+      const pos = new THREE.Vector3();
+      const dir = new THREE.Vector3();
+
+      camObj.getWorldPosition(pos);
+      camObj.getWorldDirection(dir);
+
+      // Position: Kamera + Blickrichtung * Distanz
+      const target = pos.clone().add(dir.multiplyScalar(distanceMeters));
+
+      galleryEl.object3D.position.copy(target);
+
+      // Optional: Gallery zur Kamera ausrichten (damit sie frontal ist)
+      galleryEl.object3D.lookAt(pos);
+
+      galleryEl.setAttribute('visible', 'true');
+    }
+
+    // Warten bis A-Frame/Three initialisiert ist
+    window.addEventListener('load', () => {
+      // kurzer Delay, damit Camera Tracking “steht”
+      setTimeout(() => placeInFront(2.0), 800);
+    });
+
+    // Bonus: Tap = neu vor dir platzieren (praktisch)
+    document.addEventListener('click', () => placeInFront(2.0));
+  </script>
+</body>
 </html>

@@ -4,92 +4,54 @@
     <meta charset="utf-8" />
     <title>AR Floating Gallery</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { overflow: hidden; background: black; }
-      video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-      #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-      #slideshow {
-        position: absolute;
-        width: 300px;
-        touch-action: none;
-        pointer-events: all;
-        border-radius: 8px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      body { margin: 0; overflow: hidden; }
+      #info {
+        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,0,0,0.6); color: white; padding: 12px 24px;
+        border-radius: 20px; font-size: 16px; z-index: 999;
+        font-family: sans-serif;
       }
     </style>
   </head>
   <body>
-    <video id="cam" autoplay playsinline muted></video>
-    <div id="overlay"></div>
+    <div id="info">Halte die Kamera auf eine Fläche</div>
+    <a-scene
+      webxr="requiredFeatures: hit-test; optionalFeatures: dom-overlay; overlayElement: #info;"
+      renderer="colorManagement: true"
+      vr-mode-ui="enabled: false"
+    >
+      <a-assets>
+        <img id="img0" src="IMG_5410.jpeg">
+        <img id="img1" src="IMG_4431.jpg">
+        <img id="img2" src="IMG_4430.jpg">
+        <img id="img3" src="IMG_4429.jpg">
+      </a-assets>
+
+      <a-entity id="artwork" visible="false">
+        <a-image id="slide" src="#img0" width="1.5" height="1" position="0 0 0"></a-image>
+      </a-entity>
+
+      <a-camera></a-camera>
+    </a-scene>
 
     <script>
-      navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: { ideal: 'environment' } } 
-      }).then(stream => {
-        const video = document.getElementById('cam');
-        video.srcObject = stream;
-        video.play();
-        startSlideshow();
-      }).catch(err => {
-        alert('Kamera-Fehler: ' + err.message);
+      const images = ['#img0','#img1','#img2','#img3'];
+      let current = 0;
+      const slide = document.getElementById('slide');
+      const artwork = document.getElementById('artwork');
+
+      setInterval(() => {
+        current = (current + 1) % images.length;
+        slide.setAttribute('src', images[current]);
+      }, 3000);
+
+      document.querySelector('a-scene').addEventListener('click', e => {
+        artwork.setAttribute('visible', true);
+        artwork.setAttribute('position', e.detail.intersection.point);
       });
-
-      function startSlideshow() {
-        const images = ['IMG_5410.jpeg','IMG_4431.jpg','IMG_4430.jpg','IMG_4429.jpg'];
-        const overlay = document.getElementById('overlay');
-        let current = 0;
-
-        const img = document.createElement('img');
-        img.id = 'slideshow';
-        img.src = images[0];
-        img.style.left = (window.innerWidth / 2 - 150) + 'px';
-        img.style.top = (window.innerHeight * 0.25) + 'px';
-        overlay.appendChild(img);
-
-        setInterval(() => {
-          current = (current + 1) % images.length;
-          img.src = images[current];
-        }, 3000);
-
-        let startX, startY, startLeft, startTop;
-        let lastDist = 0, width = 300;
-        let posLeft = window.innerWidth / 2 - 150;
-        let posTop = window.innerHeight * 0.25;
-
-        img.addEventListener('touchstart', e => {
-          if (e.touches.length === 1) {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            startLeft = posLeft;
-            startTop = posTop;
-          } else if (e.touches.length === 2) {
-            lastDist = Math.hypot(
-              e.touches[0].clientX - e.touches[1].clientX,
-              e.touches[0].clientY - e.touches[1].clientY
-            );
-          }
-          e.preventDefault();
-        }, { passive: false });
-
-        img.addEventListener('touchmove', e => {
-          if (e.touches.length === 1) {
-            posLeft = startLeft + e.touches[0].clientX - startX;
-            posTop = startTop + e.touches[0].clientY - startY;
-            img.style.left = posLeft + 'px';
-            img.style.top = posTop + 'px';
-          } else if (e.touches.length === 2) {
-            const dist = Math.hypot(
-              e.touches[0].clientX - e.touches[1].clientX,
-              e.touches[0].clientY - e.touches[1].clientY
-            );
-            width = Math.max(100, Math.min(700, width * dist / lastDist));
-            img.style.width = width + 'px';
-            lastDist = dist;
-          }
-          e.preventDefault();
-        }, { passive: false });
-      }
     </script>
   </body>
 </html>

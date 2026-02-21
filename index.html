@@ -4,36 +4,97 @@
     <meta charset="utf-8" />
     <title>AR Floating Gallery</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { overflow: hidden; background: black; }
+      video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+      #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+      #startBtn {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+        padding: 25px 50px; font-size: 24px; background: white;
+        border: none; border-radius: 15px; cursor: pointer; z-index: 999;
+        font-weight: bold;
+      }
+      #slideshow {
+        position: absolute; width: 300px; touch-action: none;
+        border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <a-scene
-      webxr="requiredFeatures: hit-test;"
-      renderer="colorManagement: true"
-      vr-mode-ui="enabled: false"
-    >
-      <a-assets>
-        <img id="img0" src="IMG_5410.jpeg">
-        <img id="img1" src="IMG_4431.jpg">
-        <img id="img2" src="IMG_4430.jpg">
-        <img id="img3" src="IMG_4429.jpg">
-      </a-assets>
-
-      <a-image id="slide" src="#img0" width="1.5" height="1" position="0 1.5 -2"></a-image>
-
-      <a-camera></a-camera>
-    </a-scene>
+    <video id="cam" autoplay playsinline muted></video>
+    <div id="overlay">
+      <img id="slideshow" src="IMG_5410.jpeg" />
+    </div>
+    <button id="startBtn" onclick="startAR()">▶ AR Starten</button>
 
     <script>
-      const images = ['#img0','#img1','#img2','#img3'];
-      let current = 0;
-      setInterval(() => {
-        current = (current + 1) % images.length;
-        document.getElementById('slide').setAttribute('src', images[current]);
-      }, 3000);
+      function startAR() {
+        navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        }).then(stream => {
+          document.getElementById('cam').srcObject = stream;
+          document.getElementById('startBtn').style.display = 'none';
+          initSlideshow();
+        }).catch(err => {
+          alert('Fehler: ' + err.message);
+        });
+      }
+
+      function initSlideshow() {
+        const images = ['IMG_5410.jpeg','IMG_4431.jpg','IMG_4430.jpg','IMG_4429.jpg'];
+        const img = document.getElementById('slideshow');
+        img.style.display = 'block';
+
+        let posLeft = window.innerWidth / 2 - 150;
+        let posTop = window.innerHeight * 0.2;
+        img.style.left = posLeft + 'px';
+        img.style.top = posTop + 'px';
+
+        // Slideshow
+        let current = 0;
+        setInterval(() => {
+          current = (current + 1) % images.length;
+          img.src = images[current];
+        }, 3000);
+
+        // Verschieben + Zoomen
+        let startX, startY, startLeft, startTop, lastDist = 0, width = 300;
+
+        img.addEventListener('touchstart', e => {
+          if (e.touches.length === 1) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            startLeft = posLeft;
+            startTop = posTop;
+          } else if (e.touches.length === 2) {
+            lastDist = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+          }
+          e.preventDefault();
+        }, { passive: false });
+
+        img.addEventListener('touchmove', e => {
+          if (e.touches.length === 1) {
+            posLeft = startLeft + e.touches[0].clientX - startX;
+            posTop = startTop + e.touches[0].clientY - startY;
+            img.style.left = posLeft + 'px';
+            img.style.top = posTop + 'px';
+          } else if (e.touches.length === 2) {
+            const dist = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+            width = Math.max(100, Math.min(700, width * dist / lastDist));
+            img.style.width = width + 'px';
+            lastDist = dist;
+          }
+          e.preventDefault();
+        }, { passive: false });
+      }
     </script>
   </body>
 </html>
